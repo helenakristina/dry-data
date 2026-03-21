@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Data (raw + cleaned are large and reproducible)
+data/raw/
+data/cleaned/
+*.duckdb
+*.duckdb.wal
+
+# Secrets
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Frontend
+src/frontend/node_modules/
+src/frontend/dist/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Notebooks
+.ipynb_checkpoints/
