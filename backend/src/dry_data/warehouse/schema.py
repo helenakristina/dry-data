@@ -97,15 +97,15 @@ FACT_TABLES = {
 ALL_TABLES = {**DIMENSION_TABLES, **FACT_TABLES}
 
 
-def create_all_tables(con) -> None:  # noqa: ANN001 — duckdb.DuckDBPyConnection
+def create_all_tables(con) -> None:  # type: ignore[annotation-unchecked]
     """Execute all CREATE TABLE statements against an open DuckDB connection.
 
     Args:
         con: An open duckdb connection.
     """
-    for table_name, ddl in DIMENSION_TABLES.items():
+    for _table_name, ddl in DIMENSION_TABLES.items():
         con.execute(ddl)
-    for table_name, ddl in FACT_TABLES.items():
+    for _table_name, ddl in FACT_TABLES.items():
         con.execute(ddl)
 
 
@@ -130,7 +130,7 @@ def get_table_descriptions() -> dict[str, str]:
         ),
         "fact_us_spending": (
             "US household alcohol spending from FRED/BLS Consumer Expenditure Survey. "
-            "Annual average expenditure and share of total spending, 1984–present."
+            "Annual average expenditure and share of total spending, 1984-present."
         ),
         "fact_trend_interest": (
             "Weekly Google Trends interest scores for alcohol-related keywords "
