@@ -23,7 +23,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     throw new ApiError(res.status, body || res.statusText);
   }
 
-  return res.json() as Promise<T>;
+  return res.json() as unknown as Promise<T>;
 }
 
 /** Send a natural language question and get a narrative + chart back. */

@@ -96,9 +96,22 @@ FACT_TABLES = {
 
 ALL_TABLES = {**DIMENSION_TABLES, **FACT_TABLES}
 
+FACT_TABLE_INDEXES: list[str] = [
+    # fact_brfss_responses
+    "CREATE INDEX IF NOT EXISTS idx_fact_brfss_responses_year_id ON fact_brfss_responses (year_id);",
+    "CREATE INDEX IF NOT EXISTS idx_fact_brfss_responses_state_id ON fact_brfss_responses (state_id);",
+    "CREATE INDEX IF NOT EXISTS idx_fact_brfss_responses_age_group_id ON fact_brfss_responses (age_group_id);",
+    # fact_global_consumption
+    "CREATE INDEX IF NOT EXISTS idx_fact_global_consumption_country_id ON fact_global_consumption (country_id);",
+    "CREATE INDEX IF NOT EXISTS idx_fact_global_consumption_year_id ON fact_global_consumption (year_id);",
+    "CREATE INDEX IF NOT EXISTS idx_fact_global_consumption_sex ON fact_global_consumption (sex);",
+    # fact_us_spending
+    "CREATE INDEX IF NOT EXISTS idx_fact_us_spending_year_id ON fact_us_spending (year_id);",
+]
+
 
 def create_all_tables(con) -> None:  # type: ignore[annotation-unchecked]
-    """Execute all CREATE TABLE statements against an open DuckDB connection.
+    """Execute all CREATE TABLE and CREATE INDEX statements against an open DuckDB connection.
 
     Args:
         con: An open duckdb connection.
@@ -107,6 +120,8 @@ def create_all_tables(con) -> None:  # type: ignore[annotation-unchecked]
         con.execute(ddl)
     for _table_name, ddl in FACT_TABLES.items():
         con.execute(ddl)
+    for index_ddl in FACT_TABLE_INDEXES:
+        con.execute(index_ddl)
 
 
 def get_table_descriptions() -> dict[str, str]:

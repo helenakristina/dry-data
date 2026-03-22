@@ -4,8 +4,11 @@ Coordinates the LLM provider and data repository to answer
 natural language questions with SQL, narrative, and chart.
 """
 
+import asyncio
+
 import structlog
 
+from dry_data.exceptions import LLMError
 from dry_data.llm.base import LLMProviderBase
 from dry_data.models.api import QueryResponse
 from dry_data.warehouse.repository_base import BaseDataRepository
@@ -52,8 +55,20 @@ class QueryService:
         results = self._repo.execute_safe_query(sql)
         logger.info("query_service.query_executed", rows=len(results.rows))
 
-        narrative = await self._llm.narrate_results(question, results)
-        chart = await self._llm.suggest_chart(question, results)
+        narrate_task = self._llm.narrate_results(question, results)
+        chart_task = self._llm.suggest_chart(question, results)
+
+        narrate_result, chart_result = await asyncio.gather(
+            narrate_task,
+            chart_task,
+            return_exceptions=True,
+        )
+
+        if isinstance(narrate_result, Exception):
+            raise LLMError(str(narrate_result)) from narrate_result
+
+        narrative = narrate_result
+        chart = None if isinstance(chart_result, Exception) else chart_result
 
         return QueryResponse(
             question=question,

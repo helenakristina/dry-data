@@ -97,3 +97,38 @@ def test_load_all_who_beverage_type_id_not_null(db, tmp_path):
         "SELECT count(*) FROM fact_global_consumption WHERE beverage_type_id IS NULL"
     ).fetchone()[0]
     assert nulls == 0
+
+
+# CATCHES: DELETE without transaction leaves table empty when INSERT fails,
+#          destroying existing data instead of preserving it on error
+def test_load_who_facts_rolls_back_on_insert_failure(db, tmp_path):
+    """If INSERT fails mid-transaction, the prior DELETE must be rolled back."""
+    # Load dimensions and an initial set of facts so the table is not empty.
+    cleaned = _write_parquets(tmp_path)
+    load_who_dimensions(db, cleaned)
+    load_who_facts(db, cleaned)
+    original_count = db.execute("SELECT count(*) FROM fact_global_consumption").fetchone()[0]
+    assert original_count == 3
+
+    # Write a fact parquet with a column that doesn't match the schema, causing
+    # the INSERT (inside the transaction) to fail with a column-not-found error.
+    bad_fact_df = pl.DataFrame({"wrong_col": ["x", "y"]})
+    bad_cleaned = tmp_path / "bad_cleaned" / "who"
+    bad_cleaned.mkdir(parents=True, exist_ok=True)
+    # Dimensions still needed so _require_parquet passes for them; reuse from cleaned.
+    (cleaned / "dim_country.parquet").rename(bad_cleaned / "dim_country.parquet") if False else None
+    pl.DataFrame({"iso3": ["FRA"], "country_name": ["France"]}).write_parquet(
+        bad_cleaned / "dim_country.parquet"
+    )
+    pl.DataFrame({"year": [2020]}).write_parquet(bad_cleaned / "dim_year.parquet")
+    bad_fact_df.write_parquet(bad_cleaned / "fact_global_consumption.parquet")
+
+    # The bad INSERT should raise WarehouseError; rows must survive.
+    with pytest.raises(WarehouseError):
+        load_who_facts(db, bad_cleaned)
+
+    preserved_count = db.execute("SELECT count(*) FROM fact_global_consumption").fetchone()[0]
+    assert preserved_count == original_count, (
+        f"Rollback failed: expected {original_count} rows but got {preserved_count}. "
+        "DELETE was not rolled back when INSERT failed."
+    )

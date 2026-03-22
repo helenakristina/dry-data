@@ -3,11 +3,8 @@
 All wiring lives here. Routes declare their deps via Depends().
 """
 
-from collections.abc import Generator
-
 import duckdb
-from fastapi import Depends
-from openai import AsyncOpenAI
+from fastapi import Depends, Request
 
 from dry_data.config import settings
 from dry_data.llm.base import LLMProviderBase
@@ -17,13 +14,9 @@ from dry_data.warehouse.repository_base import BaseDataRepository
 from dry_data.warehouse.repository_who import WHORepository
 
 
-def get_db_connection() -> Generator[duckdb.DuckDBPyConnection, None, None]:
-    """Yield a read-only DuckDB connection, closing it when done."""
-    con = duckdb.connect(str(settings.db_path), read_only=True)
-    try:
-        yield con
-    finally:
-        con.close()
+def get_db_connection(request: Request) -> duckdb.DuckDBPyConnection:
+    """Return the shared read-only DuckDB connection from app state."""
+    return request.app.state.db
 
 
 def get_base_data_repo(
@@ -40,10 +33,12 @@ def get_who_repo(
     return WHORepository(con)
 
 
-def get_llm_provider() -> LLMProviderBase:
-    """Return the configured OpenAI LLM provider."""
-    client = AsyncOpenAI(api_key=settings.openai_api_key)
-    return OpenAIProvider(client=client, model=settings.openai_model)
+def get_llm_provider(request: Request) -> LLMProviderBase:
+    """Return the configured LLM provider using the shared OpenAI client."""
+    return OpenAIProvider(
+        client=request.app.state.openai_client,
+        model=settings.openai_model,
+    )
 
 
 def get_query_service(

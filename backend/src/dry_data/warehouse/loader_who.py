@@ -123,28 +123,33 @@ def load_who_facts(con: duckdb.DuckDBPyConnection, cleaned_dir: Path) -> None:
     beverage_id = _get_or_create_beverage_type(con, TOTAL_BEVERAGE_NAME)
 
     try:
-        con.execute("DELETE FROM fact_global_consumption")
-
-        con.execute(
-            f"""
-            INSERT INTO fact_global_consumption
-                (id, country_id, year_id, beverage_type_id,
-                 liters_pure_alcohol_pc, pct_drinkers, sex)
-            SELECT
-                ROW_NUMBER() OVER () AS id,
-                dc.country_id,
-                dy.year_id,
-                {beverage_id} AS beverage_type_id,
-                f.liters_pure_alcohol_pc,
-                f.pct_drinkers,
-                f.sex
-            FROM read_parquet('{fact_parquet}') AS f
-            JOIN dim_country dc ON dc.iso3 = f.iso3
-            JOIN dim_year    dy ON dy.year  = f.year
-            """
-        )
-        count = con.execute("SELECT count(*) FROM fact_global_consumption").fetchone()[0]
-        logger.info("loader_who.facts.loaded", row_count=count)
+        con.execute("BEGIN")
+        try:
+            con.execute("DELETE FROM fact_global_consumption")
+            con.execute(
+                f"""
+                INSERT INTO fact_global_consumption
+                    (id, country_id, year_id, beverage_type_id,
+                     liters_pure_alcohol_pc, pct_drinkers, sex)
+                SELECT
+                    ROW_NUMBER() OVER () AS id,
+                    dc.country_id,
+                    dy.year_id,
+                    {beverage_id} AS beverage_type_id,
+                    f.liters_pure_alcohol_pc,
+                    f.pct_drinkers,
+                    f.sex
+                FROM read_parquet('{fact_parquet}') AS f
+                JOIN dim_country dc ON dc.iso3 = f.iso3
+                JOIN dim_year    dy ON dy.year  = f.year
+                """
+            )
+            con.execute("COMMIT")
+            count = con.execute("SELECT count(*) FROM fact_global_consumption").fetchone()[0]
+            logger.info("loader_who.facts.loaded", row_count=count)
+        except Exception:
+            con.execute("ROLLBACK")
+            raise
     except WarehouseError:
         raise
     except Exception as exc:

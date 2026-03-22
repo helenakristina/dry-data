@@ -1,6 +1,6 @@
 """Tests for the DuckDB warehouse schema."""
 
-from dry_data.warehouse.schema import ALL_TABLES, get_table_descriptions
+from dry_data.warehouse.schema import ALL_TABLES, FACT_TABLE_INDEXES, get_table_descriptions
 
 
 def test_all_tables_created(db):
@@ -35,3 +35,18 @@ def test_table_descriptions_complete():
     for table_name in ALL_TABLES:
         assert table_name in descriptions, f"Missing description for: {table_name}"
         assert len(descriptions[table_name]) > 20, f"Description too short for: {table_name}"
+
+
+def test_fact_table_indexes_created(db):
+    """FK indexes on fact tables should exist after schema creation."""
+    result = db.execute(
+        "SELECT index_name FROM duckdb_indexes() WHERE table_name LIKE 'fact_%'"
+    ).fetchall()
+    created_index_names = {row[0] for row in result}
+
+    for ddl in FACT_TABLE_INDEXES:
+        # Extract index name: token after "INDEX IF NOT EXISTS"
+        tokens = ddl.split()
+        idx = tokens.index("EXISTS") + 1
+        index_name = tokens[idx]
+        assert index_name in created_index_names, f"Missing index: {index_name}"

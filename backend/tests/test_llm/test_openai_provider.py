@@ -9,6 +9,7 @@ import pytest
 
 from dry_data.exceptions import LLMError
 from dry_data.llm.openai_provider import OpenAIProvider
+from dry_data.models.api import PlotlySpec
 from dry_data.models.warehouse import QueryResult
 
 
@@ -89,13 +90,14 @@ async def test_suggest_chart_returns_none_on_malformed_json(provider, mock_clien
     assert chart is None
 
 
-# CATCHES: suggest_chart returns a dict (valid PlotlySpec JSON) correctly
+# CATCHES: suggest_chart returns a PlotlySpec (valid PlotlySpec JSON) correctly
 @pytest.mark.asyncio
-async def test_suggest_chart_returns_dict_on_valid_json(provider, mock_client):
+async def test_suggest_chart_returns_plotlyspec_on_valid_json(provider, mock_client):
     mock_client.chat.completions.create.return_value = _make_response(
         '{"data": [{"type": "bar", "x": [2020], "y": [5]}]}'
     )
     result = QueryResult(columns=["year", "count"], rows=[[2020, 5]])
     chart = await provider.suggest_chart("Bar chart please", result)
-    assert isinstance(chart, dict)
-    assert "data" in chart
+    assert isinstance(chart, PlotlySpec)
+    assert len(chart.data) == 1
+    assert chart.data[0]["type"] == "bar"

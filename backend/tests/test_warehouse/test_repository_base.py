@@ -107,3 +107,19 @@ def test_validate_sql_rejects_pragma(db):
     repo = BaseDataRepository(db)
     with pytest.raises(QueryError, match=r"[Pp]rohibited"):
         repo.execute_safe_query("PRAGMA database_list")
+
+
+# CATCHES: list_tables issues N+1 queries instead of batching, causing
+#          excessive DuckDB round-trips when multiple tables exist
+def test_list_tables_batch_query_returns_all_existing_tables(db, sample_dim_year, sample_dim_country):
+    repo = BaseDataRepository(db)
+    datasets = repo.list_tables()
+    names = {d.table_name for d in datasets}
+    # Both seeded dimension tables must appear in a single batched call
+    assert "dim_year" in names
+    assert "dim_country" in names
+    # Every entry must be a properly populated DatasetInfo
+    for dataset in datasets:
+        assert isinstance(dataset, DatasetInfo)
+        assert dataset.row_count >= 0
+        assert len(dataset.columns) > 0

@@ -9,8 +9,7 @@ import duckdb
 import structlog
 
 from dry_data.exceptions import QueryError
-from dry_data.models.api import DatasetInfo
-from dry_data.models.warehouse import ColumnInfo, QueryResult, TableSchema
+from dry_data.models.warehouse import ColumnInfo, DatasetInfo, QueryResult, TableSchema
 from dry_data.warehouse.schema import get_table_descriptions
 
 logger = structlog.get_logger()
@@ -114,24 +113,81 @@ class BaseDataRepository:
         return TableSchema(table_name=table_name, columns=columns, row_count=row_count)
 
     def list_tables(self) -> list[DatasetInfo]:
-        """Return a DatasetInfo list for all known tables.
+        """Return a DatasetInfo list for all known tables using batched queries.
+
+        Issues two queries total regardless of table count: one for all column
+        metadata and one UNION ALL for row counts.
 
         Returns:
             List of DatasetInfo objects for each table with a description.
         """
         descriptions = get_table_descriptions()
-        datasets: list[DatasetInfo] = []
-        for table_name, description in descriptions.items():
-            try:
-                schema = self.get_table_schema(table_name)
-                datasets.append(
-                    DatasetInfo(
-                        table_name=table_name,
-                        description=description,
-                        row_count=schema.row_count,
-                        columns=schema.columns,
-                    )
+        if not descriptions:
+            return []
+
+        table_names = list(descriptions.keys())
+        placeholders = ", ".join("?" * len(table_names))
+
+        try:
+            cols_result = self._con.execute(
+                f"SELECT table_name, column_name, data_type, is_nullable "
+                f"FROM information_schema.columns "
+                f"WHERE table_name IN ({placeholders}) "
+                f"ORDER BY table_name, ordinal_position",
+                table_names,
+            ).fetchall()
+        except Exception as exc:
+            raise QueryError(f"Failed to batch-fetch column metadata: {exc}") from exc
+
+        # Group columns by table name
+        columns_by_table: dict[str, list[ColumnInfo]] = {}
+        for row in cols_result:
+            tname, col_name, data_type, is_nullable = row
+            columns_by_table.setdefault(tname, []).append(
+                ColumnInfo(
+                    name=col_name,
+                    type=data_type,
+                    nullable=(is_nullable.upper() == "YES"),
+                    sample_values=[],
                 )
-            except QueryError:
+            )
+
+        # Only include tables that actually exist in the DB
+        existing_tables = list(columns_by_table.keys())
+        for table_name in table_names:
+            if table_name not in columns_by_table:
                 logger.warning("repository.list_tables.missing", table_name=table_name)
+
+        if not existing_tables:
+            return []
+
+        # Batch row counts with UNION ALL — identifiers cannot be parameterized
+        def _safe_ident(name: str) -> str:
+            return '"' + name.replace('"', '""') + '"'
+
+        union_parts = [
+            f"SELECT '{t}' AS table_name, COUNT(*) AS row_count FROM {_safe_ident(t)}"
+            for t in existing_tables
+        ]
+        try:
+            counts_result = self._con.execute(
+                " UNION ALL ".join(union_parts)
+            ).fetchall()
+        except Exception as exc:
+            raise QueryError(f"Failed to batch-fetch row counts: {exc}") from exc
+
+        counts: dict[str, int] = {row[0]: row[1] for row in counts_result}
+
+        datasets: list[DatasetInfo] = []
+        for table_name in table_names:
+            if table_name not in columns_by_table:
+                continue
+            datasets.append(
+                DatasetInfo(
+                    table_name=table_name,
+                    description=descriptions[table_name],
+                    row_count=counts.get(table_name, 0),
+                    columns=columns_by_table[table_name],
+                )
+            )
         return datasets

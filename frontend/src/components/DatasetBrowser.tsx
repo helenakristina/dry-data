@@ -62,6 +62,7 @@ export function DatasetBrowser() {
             onClick={() =>
               setExpanded(expanded === ds.table_name ? null : ds.table_name)
             }
+            aria-expanded={expanded === ds.table_name}
             className="flex w-full items-center justify-between px-5 py-4 text-left"
           >
             <div>

@@ -7,9 +7,11 @@ build/
 .venv/
 venv/
 
-# Data (raw + cleaned are large and reproducible)
-data/raw/
-data/cleaned/
+# Data (raw + cleaned are large and reproducible; .gitkeep files are tracked)
+**/data/raw/*
+**/data/cleaned/*
+!**/data/raw/.gitkeep
+!**/data/cleaned/.gitkeep
 *.duckdb
 *.duckdb.wal
 

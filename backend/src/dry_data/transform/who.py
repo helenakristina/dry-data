@@ -17,7 +17,11 @@ import polars as pl
 
 from dry_data.exceptions import TransformError
 from dry_data.transform.base import BaseTransformer
-from dry_data.transform.dimensions import build_dim_country, build_dim_year, normalize_country_name
+from dry_data.transform.dimensions import (
+    COUNTRY_NAME_OVERRIDES,
+    build_dim_country,
+    build_dim_year,
+)
 
 AGGREGATE_ENTITIES: frozenset[str] = frozenset(
     [
@@ -198,7 +202,7 @@ class WHOTransformer(BaseTransformer):
         consumption = _filter_aggregates(consumption_raw)
         total_col = _detect_value_col(consumption, CONSUMPTION_VALUE_CANDIDATES)
         consumption = consumption.with_columns(
-            pl.col("Entity").map_elements(normalize_country_name, return_dtype=pl.Utf8)
+            pl.col("Entity").replace(COUNTRY_NAME_OVERRIDES)
         )
         consumption = _rename_columns(consumption, {total_col: "liters_pure_alcohol_pc"})
         consumption = consumption.with_columns(pl.col("year").cast(pl.Int64))
@@ -238,7 +242,7 @@ class WHOTransformer(BaseTransformer):
 
         # Normalize names and rename base columns before detecting value cols
         by_sex = by_sex.with_columns(
-            pl.col("Entity").map_elements(normalize_country_name, return_dtype=pl.Utf8)
+            pl.col("Entity").replace(COUNTRY_NAME_OVERRIDES)
         )
         by_sex = _rename_columns(by_sex, {})
         by_sex = by_sex.with_columns(pl.col("year").cast(pl.Int64))

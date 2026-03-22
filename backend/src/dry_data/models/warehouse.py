@@ -15,6 +15,15 @@ class ColumnInfo(BaseModel):
     sample_values: list[str]
 
 
+class DatasetInfo(BaseModel):
+    """Metadata for a table in the warehouse, shown in the dataset browser."""
+
+    table_name: str
+    description: str
+    row_count: int
+    columns: list[ColumnInfo]
+
+
 class TableSchema(BaseModel):
     """Schema descriptor for a DuckDB table."""
 

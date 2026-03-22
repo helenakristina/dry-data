@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from dry_data.exceptions import LLMError, QueryError
-from dry_data.models.api import QueryResponse
+from dry_data.models.api import PlotlySpec, QueryResponse
 from dry_data.services.query_service import QueryService
 from dry_data.warehouse.repository_base import BaseDataRepository
 
@@ -67,8 +67,9 @@ async def test_answer_question_propagates_llm_error(repo, mock_llm):
 # CATCHES: suggest_chart result is ignored instead of included in QueryResponse
 @pytest.mark.asyncio
 async def test_answer_question_includes_chart_when_suggested(repo, mock_llm):
-    chart_spec = {"data": [{"type": "bar", "x": [2020], "y": [1]}]}
+    chart_spec = PlotlySpec(data=[{"type": "bar", "x": [2020], "y": [1]}])
     mock_llm.suggest_chart = AsyncMock(return_value=chart_spec)
     service = QueryService(data_repo=repo, llm_provider=mock_llm)
     response = await service.answer_question("Show a chart of years")
-    assert response.chart == chart_spec
+    assert isinstance(response.chart, PlotlySpec)
+    assert response.chart.data == chart_spec.data

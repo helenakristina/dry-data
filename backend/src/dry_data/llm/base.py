@@ -2,6 +2,7 @@
 
 from abc import ABC, abstractmethod
 
+from dry_data.models.api import PlotlySpec
 from dry_data.models.warehouse import QueryResult
 
 
@@ -39,7 +40,7 @@ class LLMProviderBase(ABC):
         """
 
     @abstractmethod
-    async def suggest_chart(self, question: str, results: QueryResult) -> dict | None:
+    async def suggest_chart(self, question: str, results: QueryResult) -> PlotlySpec | None:
         """Suggest a Plotly figure spec for the given results.
 
         Args:
@@ -47,7 +48,7 @@ class LLMProviderBase(ABC):
             results: The query result to visualize.
 
         Returns:
-            A Plotly figure dict, or None if no chart is appropriate.
+            A PlotlySpec instance, or None if no chart is appropriate.
 
         Raises:
             LLMError: On persistent API failure.

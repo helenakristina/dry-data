@@ -97,7 +97,7 @@ dry-data/
         ├── api/client.ts      # Typed fetch wrapper
         ├── components/
         │   ├── ChatInterface.tsx    # NL query chat UI
-        │   ├── ChartRenderer.tsx    # Recharts-based chart from LLM spec
+        │   ├── ChartRenderer.tsx    # Plotly-based chart from LLM spec
         │   └── DatasetBrowser.tsx   # Expandable dataset/column viewer
         ├── hooks/             # Custom React hooks
         └── lib/               # Utility functions
@@ -256,24 +256,32 @@ LOG_LEVEL=INFO
 
 ## Quick start (for Claude Code)
 
+**TDD is non-negotiable for new code.** For every new function, endpoint, or
+component: write a failing test FIRST, run it, confirm it fails because the
+feature is missing, then write the minimum implementation to make it pass.
+If you catch yourself writing implementation before the test, stop — delete
+the implementation, write the test, watch it fail, then reimplement. Read
+the `testing-discipline` skill in `.claude/skills/` for the full rules.
+
 When starting work on this project:
 
-1. Check which phase we're in (ingest, transform, warehouse, mcp, llm, api, frontend)
-2. Read the relevant module's docstrings and existing code
-3. For backend work:
+1. Read the relevant skill(s) in `.claude/skills/` before writing any code
+2. Check which phase we're in (ingest, transform, warehouse, mcp, llm, api, frontend)
+3. Read the relevant module's docstrings and existing code
+4. For backend work:
    - `cd backend`
    - Ensure venv is active (project uses `uv`, not pip/venv directly)
-   - Run existing tests before changes: `pytest tests/ -x -q`
-   - After changes: `ruff check src/ tests/ && ruff format src/ tests/ && pytest tests/ -x`
-4. For frontend work:
+   - Run existing tests before changes: `uv run pytest tests/ -x -q`
+   - After changes: `uv run ruff check src/ tests/ && uv run ruff format src/ tests/ && uv run pytest tests/ -x`
+5. For frontend work:
    - `cd frontend`
    - `npm run typecheck` before and after changes
    - `npm run lint` to check style
    - `npx vitest run` to run tests
-5. Keep functions small (< 40 lines). Extract helpers early.
-6. When changing API models: update BOTH `backend/.../models.py` AND
+6. Keep functions small (< 40 lines). Extract helpers early.
+7. When changing API models: update BOTH `backend/.../models.py` AND
    `frontend/src/types/api.ts` in the same commit.
-
+   
 ## Package management
 
 - **Backend**: Use `uv` for all Python dependency management. `uv venv` to

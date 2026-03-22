@@ -10,6 +10,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 from dry_data.exceptions import LLMError
 from dry_data.llm.base import LLMProviderBase
 from dry_data.llm.prompts import CHART_SYSTEM_PROMPT, NARRATION_SYSTEM_PROMPT, SQL_SYSTEM_PROMPT
+from dry_data.models.api import PlotlySpec
 from dry_data.models.warehouse import QueryResult
 
 logger = structlog.get_logger()
@@ -105,7 +106,7 @@ class OpenAIProvider(LLMProviderBase):
             raise LLMError(str(exc)) from exc
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=1, max=10), reraise=True)
-    async def suggest_chart(self, question: str, results: QueryResult) -> dict | None:
+    async def suggest_chart(self, question: str, results: QueryResult) -> PlotlySpec | None:
         """Suggest a Plotly figure spec, or None if no chart is appropriate.
 
         Args:
@@ -113,7 +114,7 @@ class OpenAIProvider(LLMProviderBase):
             results: The query results to visualize.
 
         Returns:
-            A Plotly figure dict, or None.
+            A PlotlySpec instance, or None.
 
         Raises:
             LLMError: If the API call fails after retries.
@@ -133,8 +134,11 @@ class OpenAIProvider(LLMProviderBase):
             if raw.lower() == "null":
                 return None
             try:
-                return json.loads(raw)
-            except json.JSONDecodeError:
+                parsed = json.loads(raw)
+                if not isinstance(parsed, dict):
+                    return None
+                return PlotlySpec(**parsed)
+            except (json.JSONDecodeError, Exception):
                 logger.warning("llm.suggest_chart.bad_json", raw=raw[:100])
                 return None
         except LLMError:
