@@ -23,8 +23,9 @@ data/cleaned/
 *.swo
 
 # Frontend
-src/frontend/node_modules/
-src/frontend/dist/
+**/node_modules/
+frontend/dist/
+frontend/.vite/
 
 # OS
 .DS_Store

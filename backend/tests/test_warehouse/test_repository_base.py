@@ -79,3 +79,31 @@ def test_list_tables_includes_fact_global_consumption(db):
     names = [d.table_name for d in datasets]
     assert "fact_global_consumption" in names
     assert all(isinstance(d, DatasetInfo) for d in datasets)
+
+
+# CATCHES: TRUNCATE slips through the blocklist and wipes a table
+def test_validate_sql_rejects_truncate(db):
+    repo = BaseDataRepository(db)
+    with pytest.raises(QueryError, match=r"[Pp]rohibited"):
+        repo.execute_safe_query("TRUNCATE TABLE dim_year")
+
+
+# CATCHES: LOAD can import a native extension and execute arbitrary code
+def test_validate_sql_rejects_load(db):
+    repo = BaseDataRepository(db)
+    with pytest.raises(QueryError, match=r"[Pp]rohibited"):
+        repo.execute_safe_query("LOAD 'httpfs'")
+
+
+# CATCHES: INSTALL downloads and installs a DuckDB extension
+def test_validate_sql_rejects_install(db):
+    repo = BaseDataRepository(db)
+    with pytest.raises(QueryError, match=r"[Pp]rohibited"):
+        repo.execute_safe_query("INSTALL httpfs")
+
+
+# CATCHES: PRAGMA can toggle DuckDB security or memory settings
+def test_validate_sql_rejects_pragma(db):
+    repo = BaseDataRepository(db)
+    with pytest.raises(QueryError, match=r"[Pp]rohibited"):
+        repo.execute_safe_query("PRAGMA database_list")

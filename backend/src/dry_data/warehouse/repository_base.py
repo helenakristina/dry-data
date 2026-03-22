@@ -16,7 +16,8 @@ from dry_data.warehouse.schema import get_table_descriptions
 logger = structlog.get_logger()
 
 _FORBIDDEN_PATTERN = re.compile(
-    r"\b(INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|ATTACH|COPY|EXPORT|IMPORT)\b",
+    r"\b(INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|ATTACH|COPY|EXPORT|IMPORT"
+    r"|TRUNCATE|PRAGMA|SET|CALL|LOAD|INSTALL|VACUUM)\b",
     re.IGNORECASE,
 )
 
@@ -100,9 +101,12 @@ class BaseDataRepository:
             for row in cols_result
         ]
 
+        # Use double-quote identifier escaping — SQL identifiers cannot be parameterized
+        # via ? placeholders, so we escape embedded quotes and wrap in double quotes.
+        safe_name = '"' + table_name.replace('"', '""') + '"'
         try:
             row_count = self._con.execute(
-                f"SELECT COUNT(*) FROM {table_name}"
+                f"SELECT COUNT(*) FROM {safe_name}"
             ).fetchone()[0]
         except Exception as exc:
             raise QueryError(f"Failed to count rows in {table_name!r}: {exc}") from exc
