@@ -30,7 +30,7 @@ SOURCES: list[tuple[str, str]] = [
         "consumption_by_sex.csv",
     ),
     (
-        f"{OWID_BASE}/share-of-adults-who-drink-alcohol.csv{CSV_PARAMS}",
+        f"{OWID_BASE}/share-of-adults-who-drank-alcohol-in-last-year.csv{CSV_PARAMS}",
         "share_drinkers.csv",
     ),
 ]
@@ -118,7 +118,5 @@ class WHOIngestor(BaseIngestor):
             response = httpx.get(url, follow_redirects=True, timeout=60)
             response.raise_for_status()
         except httpx.HTTPStatusError as exc:
-            raise IngestionError(
-                f"HTTP {exc.response.status_code} fetching {url}"
-            ) from exc
+            raise IngestionError(f"HTTP {exc.response.status_code} fetching {url}") from exc
         return response.content

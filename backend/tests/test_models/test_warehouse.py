@@ -1,9 +1,6 @@
 """Tests for warehouse Pydantic models."""
 
-import pytest
-from pydantic import ValidationError
-
-from dry_data.models.warehouse import ColumnInfo, TableSchema, QueryResult
+from dry_data.models.warehouse import ColumnInfo, QueryResult, TableSchema
 
 
 # CATCHES: ColumnInfo silently allows nullable field to be a non-bool string like "YES"

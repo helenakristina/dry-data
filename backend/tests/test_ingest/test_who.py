@@ -11,8 +11,7 @@ from dry_data.ingest.who import WHOIngestor
 
 SAMPLE_CSV = b"Entity,Code,Year,total_alcohol\nFrance,FRA,2020,12.1\nGermany,DEU,2020,11.4\n"
 SAMPLE_CONSUMPTION_BY_SEX_CSV = (
-    b"Entity,Code,Year,male_alcohol,female_alcohol\n"
-    b"France,FRA,2020,18.0,6.2\n"
+    b"Entity,Code,Year,male_alcohol,female_alcohol\nFrance,FRA,2020,18.0,6.2\n"
 )
 SAMPLE_SHARE_DRINKERS_CSV = b"Entity,Code,Year,share_drinkers\nFrance,FRA,2020,0.72\n"
 
@@ -33,7 +32,7 @@ def test_who_ingestor_rejects_empty_response(tmp_path, httpx_mock: HTTPXMock):
     httpx_mock.add_response(content=b"")
     ingestor = WHOIngestor()
     ingestor._raw_dir_override = tmp_path
-    with pytest.raises(IngestionError, match="[Ee]mpty"):
+    with pytest.raises(IngestionError, match=r"[Ee]mpty"):
         ingestor.download()
 
 

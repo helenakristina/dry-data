@@ -1,4 +1,4 @@
-import type { QueryRequest, QueryResponse, DatasetInfo } from "@/types/api";
+import type { QueryRequest, QueryResponse, DatasetInfo, PlotlySpec } from "@/types/api";
 
 const BASE_URL = "/api";
 
@@ -43,4 +43,9 @@ export async function listDatasets(): Promise<DatasetInfo[]> {
 /** Healthcheck. */
 export async function healthCheck(): Promise<{ status: string }> {
   return request<{ status: string }>("/health");
+}
+
+/** Fetch the pre-built global alcohol consumption trend chart. */
+export async function getGlobalTrend(): Promise<PlotlySpec> {
+  return request<PlotlySpec>("/story/global-trend");
 }

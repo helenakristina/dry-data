@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Send, Loader2, ChevronDown } from "lucide-react";
 import { queryData } from "@/api/client";
 import { ChartRenderer } from "@/components/ChartRenderer";
+import { StoryChart } from "@/components/StoryChart";
 import type { ChatMessage } from "@/types/api";
 
 const STARTER_QUESTIONS = [
@@ -70,14 +71,19 @@ export function ChatInterface() {
       {/* Messages area */}
       <div className="flex-1 overflow-y-auto px-6 py-6">
         {messages.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center">
-            <h2 className="mb-2 text-2xl font-semibold text-gray-800">
-              What do you want to explore?
-            </h2>
-            <p className="mb-8 max-w-md text-center text-gray-500">
-              Ask questions about global alcohol trends, US drinking patterns,
-              spending data, or the sober-curious movement.
-            </p>
+          <div className="flex h-full flex-col items-center justify-center gap-8">
+            <div className="w-full max-w-3xl">
+              <StoryChart />
+            </div>
+            <div className="text-center">
+              <h2 className="mb-2 text-2xl font-semibold text-gray-800">
+                What do you want to explore?
+              </h2>
+              <p className="mb-6 max-w-md text-center text-gray-500">
+                Ask questions about global alcohol trends, US drinking patterns,
+                spending data, or the sober-curious movement.
+              </p>
+            </div>
             <div className="grid max-w-2xl grid-cols-2 gap-3">
               {STARTER_QUESTIONS.map((q) => (
                 <button

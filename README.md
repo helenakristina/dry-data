@@ -50,9 +50,8 @@ cp .env.example .env
 
 # Backend
 cd backend
-uv venv && source .venv/bin/activate
-uv pip install -e ".[dev]"
-pytest tests/ -x -q              # verify everything passes
+uv sync
+uv run pytest tests/ -x -q              # verify everything passes
 cd ..
 
 # Frontend (no create-react-app needed — Vite scaffolding is already here)
@@ -63,10 +62,10 @@ cd ..
 
 # Run the data pipeline (after backend setup)
 cd backend
-python -m scripts.run_pipeline
+uv run -m scripts.run_pipeline
 
 # Start the API server
-uvicorn dry_data.api.app:app --reload
+uv run uvicorn dry_data.api.app:app --port 8001 --reload
 ```
 
 ### How the frontend dev server works
@@ -74,7 +73,7 @@ uvicorn dry_data.api.app:app --reload
 You don't need `create-react-app` or any generator — the project is already
 scaffolded with Vite. When you run `npm run dev`, Vite serves `index.html`
 and hot-reloads any changes to `.tsx` files instantly. The `vite.config.ts`
-proxies any `/api/*` requests to `localhost:8000`, so the frontend talks to
+proxies any `/api/*` requests to `localhost:8001`, so the frontend talks to
 your FastAPI backend seamlessly during development.
 
 For a production build: `npm run build` outputs static files to `frontend/dist/`

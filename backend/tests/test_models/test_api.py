@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from dry_data.models.api import QueryRequest, QueryResponse, DatasetInfo, ColumnInfo
+from dry_data.models.api import DatasetInfo, QueryRequest, QueryResponse
 
 
 # CATCHES: QueryRequest accepts an empty string, sending a blank question to the LLM

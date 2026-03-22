@@ -10,12 +10,20 @@ export function DatasetBrowser() {
   const [expanded, setExpanded] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
     listDatasets()
-      .then(setDatasets)
-      .catch(() =>
-        setError("Could not load datasets. Is the backend running?"),
-      )
-      .finally(() => setLoading(false));
+      .then((data) => {
+        if (!cancelled) setDatasets(data);
+      })
+      .catch(() => {
+        if (!cancelled) setError("Could not load datasets. Is the backend running?");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   if (loading) {

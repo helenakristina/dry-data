@@ -40,20 +40,24 @@ AGGREGATE_ENTITIES: frozenset[str] = frozenset(
 
 # Possible column names from OWID CSVs (they change between dataset versions)
 CONSUMPTION_VALUE_CANDIDATES = [
-    "Alcohol consumption per capita \u2013 WHO version (liters of pure alcohol)",
-    "total_alcohol",
+    "Alcohol consumption",                                                              # current OWID name
+    "Alcohol consumption per capita \u2013 WHO version (liters of pure alcohol)",      # legacy
+    "total_alcohol",                                                                    # short name
 ]
 MALE_VALUE_CANDIDATES = [
-    "Alcohol consumption per capita, male \u2013 WHO version (liters of pure alcohol)",
-    "male_alcohol",
+    "Men",                                                                              # current OWID name
+    "Alcohol consumption per capita, male \u2013 WHO version (liters of pure alcohol)", # legacy
+    "male_alcohol",                                                                     # short name
 ]
 FEMALE_VALUE_CANDIDATES = [
-    "Alcohol consumption per capita, female \u2013 WHO version (liters of pure alcohol)",
-    "female_alcohol",
+    "Women",                                                                            # current OWID name
+    "Alcohol consumption per capita, female \u2013 WHO version (liters of pure alcohol)", # legacy
+    "female_alcohol",                                                                   # short name
 ]
 SHARE_VALUE_CANDIDATES = [
-    "Indicator:Alcohol, drinkers only consumption (APC) - Data by country",
-    "share_drinkers",
+    "Alcohol, consumers past 12 months (%) - Sex: both sexes",                         # current OWID name
+    "Indicator:Alcohol, drinkers only consumption (APC) - Data by country",             # legacy
+    "share_drinkers",                                                                   # short name
 ]
 
 

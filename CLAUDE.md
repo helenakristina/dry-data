@@ -173,7 +173,7 @@ dry-data/
   When one changes, update the other.
 - **No `localStorage`** for state. Use React state. If persistence is needed
   later, discuss first.
-- **Vite proxy**: In dev mode, `/api/*` requests proxy to `localhost:8000`.
+- **Vite proxy**: In dev mode, `/api/*` requests proxy to `localhost:8001`.
   The API client uses relative paths (`/api/query`), never absolute URLs.
 - **Plotly for all charts.** The `ChartRenderer` component takes a Plotly
   figure spec and renders it via `react-plotly.js`. The LLM generates the

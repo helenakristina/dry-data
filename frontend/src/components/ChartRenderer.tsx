@@ -29,13 +29,24 @@ const CONFIG: Partial<Plotly.Config> = {
 };
 
 export function ChartRenderer({ spec }: ChartRendererProps) {
+  if (spec.data.length === 0) {
+    return (
+      <p className="py-4 text-center text-sm text-gray-400">No data to visualize</p>
+    );
+  }
+
   const mergedLayout: Partial<Plotly.Layout> = {
     ...BASE_LAYOUT,
     ...spec.layout,
   };
 
+  const title =
+    typeof mergedLayout.title === "string"
+      ? mergedLayout.title
+      : (mergedLayout.title as { text?: string } | undefined)?.text ?? "Chart";
+
   return (
-    <div className="rounded-xl border border-gray-100 bg-white p-2">
+    <div role="img" aria-label={title} className="rounded-xl border border-gray-100 bg-white p-2">
       <Plot
         data={spec.data}
         layout={mergedLayout}
